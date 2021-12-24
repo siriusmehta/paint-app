@@ -26,34 +26,34 @@ class Paint(object):
 
     def __init__(self):
         self.root = Tk()
-        self.pen_button = Button(self.root, text = "Pen")
+        self.pen_button = Button(self.root, text="Pen", command=self.use_pen)
         self.pen_button.grid(row=0, column=0, sticky='ew')
 
-        self.brush_button = Button(self.root, text="Brush")
+        self.brush_button = Button(self.root, text="Brush", command=self.use_brush)
         self.brush_button.grid(row=0, column=1, sticky='ew')
 
-        self.color_button = Button(self.root, text="Color")
+        self.color_button = Button(self.root, text="Color",command=self.choose_color)
         self.color_button.grid(row=0, column=2, sticky='ew')
 
-        self.eraser_button = Button(self.root, text="Brush")
+        self.eraser_button = Button(self.root, text="Eraser", command=self.use_eraser)
         self.eraser_button.grid(row=0, column=3, sticky='ew')
 
         self.size_scale = Scale(self.root, from_=1, to=10, orient='horizontal')
         self.size_scale.grid(row=0, column=4, sticky='ew')
 
-        self.line_button = Button(self.root, text="line")
+        self.line_button = Button(self.root, text="Line", command=self.use_line)
         self.line_button.grid(row=1, column=0, sticky='ew')
 
-        self.poly_button = Button(self.root, text="Polygon")
+        self.poly_button = Button(self.root, text="Polygon", command=self.use_poly)
         self.poly_button.grid(row=1, column=1, sticky='ew')
 
         self.black_button = Button(self.root, text='', bg='black', activebackground="black")
         self.black_button.grid(row=1, column=2, sticky='ew')
 
-        self.clear_button = Button(self.root, text='Clear')
+        self.clear_button = Button(self.root, text='Clear', command=lambda: self.c.delete("all"))
         self.clear_button.grid(row=1, column=3, sticky='ew')
 
-        self.save_button = Button(self.root, text='Save')
+        self.save_button = Button(self.root, text='Save', command=self.save_file)
         self.save_button.grid(row=1, column=4, sticky='ew')
 
         self.c = Canvas(self.root, bg="white", width=600, height=600)
@@ -74,7 +74,7 @@ class Paint(object):
         self.active_button = None
         self.size_multiplier = 1
 
-        self.active_button(self.pen_button)
+        self.activate_button(self.pen_button)
         self.c.bind('<B1-Motion>', self.paint)
         self.c.bind('<ButtonRelease-1>', self.reset)
 
@@ -106,9 +106,9 @@ class Paint(object):
             self.color = color
 
     def use_eraser(self):
-        self.active_button(self.eraser_button, eraser_mode=True)
+        self.activate_button(self.eraser_button, eraser_mode=True)
 
-    def active_button(self, some_button, eraser_mode=False):
+    def activate_button(self, some_button, eraser_mode=False):
         self.set_status()
 
         if self.active_button:
@@ -162,6 +162,34 @@ class Paint(object):
         if self.active_button:
             btn = self.active_button["text"]
             oldxy = (self.line_start if btn in ("Line", "Polygon") else(self.old_x, self.old_y))
+
+            self.var_status.set(f"Selected:{btn}\n" + ((f"Old (x,y ): {oldxy}\n(x,y): ({x}, {y})") if x is not None and y is not None else ""))
+
+    def save_file(self):
+        self.popup = FileNamePopup(self.root)
+        self.save_button["state"] = "disabled"
+        self.root.wait_window(self.popup.top)
+
+        filepng = self.popup.filename = ' .png'
+
+        if not os.path.exists(filepng) or messagebox.askyesno("File already exists", "Overwrite"):
+            fileps = self.popup.filename + '.eps'
+
+            self.c.postscript(file=fileps)
+            img = Image.open(fileps)
+            img.save(filepng, 'png')
+            os.remove(fileps)
+
+            self.save_button["state"] = "normal"
+
+            messagebox.showinfo("File Save", "File Saved!")
+        else:
+            messagebox.showinfo("File Save", "File not Saved!")
+
+        self.save_button["state"] = "normal"
+
+
+
 
 
 
